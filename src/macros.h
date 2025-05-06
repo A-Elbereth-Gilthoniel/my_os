@@ -1,3 +1,5 @@
+#ifndef MACROS
+#define MACROS
 typedef unsigned char uint8_t;
 typedef char int8_t;
 
@@ -22,3 +24,4 @@ typedef uint32_t size_t;
 #define WIDTH 80
 #define HEIGHT 25
 #define VGA_MEMORY 0xB8000
+#endif
