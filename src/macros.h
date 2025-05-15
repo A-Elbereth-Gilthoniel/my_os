@@ -21,6 +21,7 @@ typedef long int32_t;
 
 typedef uint32_t size_t;
 
+#define NULL 0
 #define WIDTH 80
 #define HEIGHT 25
 #define VGA_MEMORY 0xB8000

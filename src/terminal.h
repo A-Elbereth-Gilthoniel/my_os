@@ -31,3 +31,4 @@ void terminal_initialize(terminal* monitor);
 void terminal_writestring(terminal* monitor, const char* text);
 void terminal_putchar(terminal* monitor, char c);
 size_t strlen(const char* text);
+char* uint_to_string(unsigned int value);

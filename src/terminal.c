@@ -44,6 +44,7 @@ void terminal_writestring(terminal* monitor, const char* text)
     {
         terminal_putchar(monitor, text[i]);
     }
+    return;
 }
 
 //=================================================
@@ -100,3 +101,36 @@ size_t strlen(const char* text)
 }
 
 //=================================================
+
+char* uint_to_string(unsigned int value) {
+    static char buffer[51]; // Статический буфер (всегда возвращает один и тот же)
+    int i = 0;
+
+    // Обработка нуля
+    if (value == 0) {
+        buffer[0] = '0';
+        buffer[1] = '\0';
+        return buffer;
+    }
+
+    // Преобразуем число в строку в обратном порядке
+    while (value > 0 && i < 50) {
+        buffer[i++] = '0' + (value % 10);
+        value /= 10;
+    }
+
+    buffer[i] = '\0';
+
+    // Реверс строки
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char tmp = buffer[start];
+        buffer[start] = buffer[end];
+        buffer[end] = tmp;
+        start++;
+        end--;
+    }
+
+    return buffer;
+}
