@@ -1,7 +1,9 @@
 #include "macros.h"
+#include "inline_assembly.h"
 #include "terminal.h"
+#include <string.h>
 
-extern terminal monitor;
+extern terminal* monitor;
 //=========================================================
 
 static inline uint16_t vga_entry(unsigned char symb, uint8_t color)
@@ -11,19 +13,27 @@ static inline uint16_t vga_entry(unsigned char symb, uint8_t color)
 
 //=========================================================
 
-static inline uint8_t vga_entry_color(enum vga_color front_color, enum vga_color background_color)
+static inline char vga_decode(uint16_t pixel)
+{
+    return (char)(pixel & 0x00FF);
+}
+
+//=========================================================
+
+uint8_t vga_entry_color(enum vga_color front_color, enum vga_color background_color)
 {
     return (front_color | (background_color << 4));
 }
 
 //=========================================================
 
-void terminal_initialize(terminal* monitor1)
+void terminal_initialize()
 {
-    monitor1->row = 0;
-    monitor1->column = 0;
-    monitor1->color = vga_entry_color(VGA_COLOR_CYAN, VGA_COLOR_BLACK);
-    monitor1->buffer = (uint16_t*)VGA_MEMORY;
+    monitor->row = 0;
+    monitor->column = 0;
+    monitor->color = vga_entry_color(VGA_COLOR_CYAN, VGA_COLOR_BLACK);
+    monitor->buffer = (uint16_t*)VGA_MEMORY;
+    monitor->command[0] = '\0';
 
     for (int y = 0; y < HEIGHT; y++)
     {
@@ -31,90 +41,78 @@ void terminal_initialize(terminal* monitor1)
         for (int x = 0; x < WIDTH; x++)
         {
             index++;
-            monitor1->buffer[index] = vga_entry(' ', monitor1->color);
+            monitor->buffer[index] = vga_entry(' ', monitor->color);
         }
     }
 }
 
 //=================================================
 
-void terminal_writestring(terminal* monitor1, const char* text)
+void terminal_writestring(const char* text)
 {
     size_t str_size = strlen(text);
     for (size_t i = 0; i < str_size; i++)
     {
-        terminal_putchar(monitor1, text[i]);
+        terminal_putchar(text[i]);
     }
     return;
 }
 
 //=================================================
 
-void terminal_putchar(terminal* monitor1, char c)
+void terminal_putchar(char c)
 {
     if (c == '\n')
     {
-        monitor1->row++;
-        monitor1->column = 0;
+        monitor->row++;
+        monitor->column = 0;
         return;
     }
     if (c == '\b')
     {
-        if (monitor1->column == 0)
+        if (monitor->column == 0)
         {
-            if (monitor1->row == 0)
+            if (monitor->row == 0)
             {
-                monitor1->row = 0;
-                monitor1->column = 0;
+                monitor->row = 0;
+                monitor->column = 0;
             }
             else
             {
-                monitor1->row--;
-                monitor1->column = WIDTH;
-                while ((monitor1->buffer[monitor1->row * WIDTH + monitor1->column] == vga_entry(' ', monitor1->color)) && monitor1->column != 0)
-                    monitor1->column--;
+                monitor->row--;
+                monitor->column = WIDTH;
+                while ((monitor->buffer[monitor->row * WIDTH + monitor->column] == vga_entry(' ', monitor->color)) && monitor->column != 0)
+                    monitor->column--;
             }
         }
         else
-            monitor1->column--;
-        monitor1->buffer[monitor1->row * WIDTH + monitor1->column] = vga_entry(' ', monitor1->color);
+            monitor->column--;
+        monitor->buffer[monitor->row * WIDTH + monitor->column] = vga_entry(' ', monitor->color);
+        move_cursor(monitor->row * WIDTH + monitor->column + 1);
         return;
     }
-    monitor1->buffer[monitor1->row * WIDTH + monitor1->column] = vga_entry(c, monitor1->color);
-    if (++monitor1->column == WIDTH)
+    monitor->buffer[monitor->row * WIDTH + monitor->column] = vga_entry(c, monitor->color);
+    move_cursor(monitor->row * WIDTH + monitor->column + 1);
+    if (++monitor->column == WIDTH)
     {
-        monitor1->column = 0;
-        if (++monitor1->row == HEIGHT)
-            monitor1->row = 0;
+        monitor->column = 0;
+        if (++monitor->row == HEIGHT)
+            monitor->row = 0;
     }
-}
-
-//=================================================
-
-size_t strlen(const char* text)
-{
-    size_t counter = 0;
-    while (text[counter] != '\0')
-    {
-        counter++;
-    }
-    return counter;
 }
 
 //=================================================
 
 char* uint_to_string(unsigned int value) {
-    static char buffer[51]; // Статический буфер (всегда возвращает один и тот же)
+    static char buffer[51];
     int i = 0;
 
-    // Обработка нуля
     if (value == 0) {
         buffer[0] = '0';
         buffer[1] = '\0';
         return buffer;
     }
 
-    // Преобразуем число в строку в обратном порядке
     while (value > 0 && i < 50) {
         buffer[i++] = '0' + (value % 10);
         value /= 10;
@@ -122,7 +120,6 @@ char* uint_to_string(unsigned int value) {
 
     buffer[i] = '\0';
 
-    // Реверс строки
     int start = 0;
     int end = i - 1;
     while (start < end) {
@@ -141,5 +138,24 @@ char* uint_to_string(unsigned int value) {
 void terminal_write(const char* data, size_t size)
 {
 	for (size_t i = 0; i < size; i++)
-		terminal_putchar(&monitor, data[i]);
+		terminal_putchar(data[i]);
+}
+
+//===================================================
+
+void getline(char* buffer, uint32_t row, uint32_t n)
+{
+    for (int i = 0; i < n; i++)
+        buffer[i] =  vga_decode(monitor->buffer[row * WIDTH + i]);
+    buffer[n] = '\0';
+}
+
+//===================================================
+
+void move_cursor(uint16_t position)
+{
+    outb(VGA_COMMAND_PORT, 0x0F);
+    outb(VGA_DATA_PORT, (uint8_t)(position & 0xFF));
+    outb(VGA_COMMAND_PORT, 0x0E);
+    outb(VGA_DATA_PORT, (uint8_t)((position >> 8) & 0xFF));
 }

@@ -3,3 +3,4 @@
 #include "keyboard.h"
 #include "heap.h"
 #include "multithreads.h"
+#include "commands.h"

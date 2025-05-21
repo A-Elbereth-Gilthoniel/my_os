@@ -22,14 +22,17 @@ typedef struct {
     size_t column;
     uint8_t color;
     uint16_t* buffer;
+	char command[50];
 } terminal;
 
 
-static inline uint8_t vga_entry_color(enum vga_color front_color, enum vga_color background_color);
+uint8_t vga_entry_color(enum vga_color front_color, enum vga_color background_color);
 static inline uint16_t vga_entry(unsigned char symb, uint8_t color);
-void terminal_initialize(terminal* monitor);
-void terminal_writestring(terminal* monitor, const char* text);
-void terminal_putchar(terminal* monitor, char c);
-size_t strlen(const char* text);
+void terminal_initialize();
+void terminal_writestring(const char* text);
+void terminal_putchar(char c);
 char* uint_to_string(unsigned int value);
 void terminal_write(const char* data, size_t size);
+void getline(char* buffer, uint32_t row, uint32_t n);
+static inline char vga_decode(uint16_t pixel);
+void move_cursor(uint16_t position);

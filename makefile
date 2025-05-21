@@ -19,8 +19,8 @@ OBJ := $(filter-out kernel/obj/boot.o, $(OBJ))
 
 include arch/$(ARCH)/make.config
 
-CFLAGS := $(KERNEL_ARCH_CFLAGS) -ffreestanding -Wall -Wextra
-LIBS := $(KERNEL_ARCH_LIBS) -nostdlib -lgcc  -lk
+CFLAGS := $(KERNEL_ARCH_CFLAGS) -ffreestanding -Wall -Wextra -Ikernel/usr/local/include
+LIBS := $(KERNEL_ARCH_LIBS) -nostdlib -lgcc  -Lkernel/usr/local/lib -lk
 
 
 .PHONY : all clean run built-i686
@@ -34,7 +34,7 @@ $(ISO) : kernel/obj/$(BIN)
 	grub-mkrescue -o $@ $(ISO_DIR)
 
 kernel/obj/$(BIN) : kernel/obj/boot.o $(OBJ) kernel/src/linker.ld
-	$(CC) -T kernel/src/linker.ld -o kernel/obj/$(BIN) $(CFLAGS) $(LIBS) kernel/obj/boot.o $(OBJ)
+	$(CC) -T kernel/src/linker.ld -o kernel/obj/$(BIN) $(CFLAGS) $(LIBS) kernel/obj/boot.o $(OBJ) kernel/usr/local/lib/libk.a
 	if grub-file --is-x86-multiboot kernel/obj/$(BIN); then \
 		echo multiboot confirmed; \
 	else \

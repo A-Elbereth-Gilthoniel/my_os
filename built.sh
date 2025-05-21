@@ -44,7 +44,4 @@ make all-target-libgcc -j$(nproc)
 make install-gcc
 make install-target-libgcc
 
-echo ""
-echo "✅ Кросс-компилятор $TARGET-gcc установлен в $PREFIX"
-echo "📌 Добавь в .bashrc:"
-echo "    export PATH=\"$PREFIX/bin:\$PATH\""
+echo "Success
